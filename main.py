@@ -230,7 +230,13 @@ def place_order(symbol, side, risk_usdt):
         return False
 
     # Ordem Take Profit
-    take_profit_price = round(entry_price * (1.025 if side == 'LONG' else 0.975), get_price_decimals(symbol))
+    # Busca take profit percentual da moeda ou usa padrão 2.5%
+    tp_percent = CONFIGS.get(symbol, {}).get('take_profit_percent', 0.025)
+    if side == 'LONG':
+        take_profit_price = round(entry_price * (1 + tp_percent), get_price_decimals(symbol))
+    else:
+        take_profit_price = round(entry_price * (1 - tp_percent), get_price_decimals(symbol))
+
 
     try:
         order_tp = client.futures_create_order(
