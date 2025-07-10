@@ -192,9 +192,12 @@ def place_order(symbol, side, risk_usdt):
 
     stop_loss_price = df['low'].min() if side == 'LONG' else df['high'].max()
 
-    risk_percent = CONFIGS.get(symbol, {}).get('risk_percent', RISK_PERCENT)
-    risk_usdt = get_usdt_balance() * risk_percent
-    qty = calculate_risk_quantity(symbol, entry_price, stop_loss_price, risk_usdt)
+    margin_available = get_available_margin()
+    risk_percent = CONFIGS[symbol]['risk_percent']
+    leverage = CONFIGS[symbol]['leverage']
+    position_usdt = margin_available * risk_percent * leverage
+
+    qty = round_qty(position_usdt / entry_price, symbol)
     if qty <= 0:
         log(f"Quantidade calculada inválida para {symbol}: {qty}")
         return False
@@ -268,8 +271,8 @@ def place_order(symbol, side, risk_usdt):
     }
 
     log(f"🟢 {symbol} {side} aberto | Entrada: {entry_price} | Qtd: {qty} | SL: {stop_price}")
-    send_telegram(f"🚀 {symbol} {side} aberto em {entry_price}\nSL: {stop_price}")
-    send_discord(f"🚀 {symbol} {side} aberto em {entry_price}\nSL: {stop_price}")
+    # send_telegram(f"🚀 {symbol} {side} aberto em {entry_price}\nSL: {stop_price}")
+    # send_discord(f"🚀 {symbol} {side} aberto em {entry_price}\nSL: {stop_price}")
 
     return True
 
@@ -325,8 +328,6 @@ def update_stop_loss(symbol):
                 )
                 positions_state[symbol]['stop_loss'] = new_stop
                 log(f"🔄 Stop LONG atualizado para {stop_price} em {symbol}")
-                send_telegram(f"🔄 Stop LONG atualizado para {symbol}: {stop_price}")
-                send_discord(f"🔄 Stop LONG atualizado para {symbol}: {stop_price}")
             except Exception as e:
                 log(f"Erro ao atualizar stop LONG {symbol}: {e}")
     else:
@@ -345,8 +346,6 @@ def update_stop_loss(symbol):
                 )
                 positions_state[symbol]['stop_loss'] = new_stop
                 log(f"🔄 Stop SHORT atualizado para {stop_price} em {symbol}")
-                send_telegram(f"🔄 Stop SHORT atualizado para {symbol}: {stop_price}")
-                send_discord(f"🔄 Stop SHORT atualizado para {symbol}: {stop_price}")
             except Exception as e:
                 log(f"Erro ao atualizar stop SHORT {symbol}: {e}")
 
@@ -425,14 +424,16 @@ def task_check_signals():
         # Só abre LONG se flag RSI LONG estiver ativada e crossover LONG ocorrer
         if ma_signal == 'LONG' and rsi_trigger_flags[symbol]['LONG'] and direction in ['LONG', 'BOTH']:
             log(f"🔔 Sinal COMPRA (LONG) detectado para {symbol}")
-            success = place_order(symbol, 'LONG', get_usdt_balance() * CONFIGS[symbol]['risk_percent'])
+            success = place_order(symbol, 'LONG', get_available_margin() * CONFIGS[symbol]['risk_percent'])
+
             if success:
                 rsi_trigger_flags[symbol]['LONG'] = False  # reseta a flag
 
         # Só abre SHORT se flag RSI SHORT estiver ativada e crossover SHORT ocorrer
         elif ma_signal == 'SHORT' and rsi_trigger_flags[symbol]['SHORT'] and direction in ['SHORT', 'BOTH']:
             log(f"🔻 Sinal VENDA (SHORT) detectado para {symbol}")
-            success = place_order(symbol, 'SHORT', get_usdt_balance() * CONFIGS[symbol]['risk_percent'])
+            success = place_order(symbol, 'SHORT', get_available_margin() * CONFIGS[symbol]['risk_percent'])
+
             if success:
                 rsi_trigger_flags[symbol]['SHORT'] = False  # reseta a flag
 
@@ -448,9 +449,15 @@ def task_monitor_positions():
     for symbol in SYMBOLS:
         monitor_position(symbol)
 
+def cancel_orders_if_no_position():
+    for symbol in SYMBOLS:
+        if not positions_state.get(symbol, {}).get('open', False):
+            cancel_all_open_orders(symbol)
+
 # ========== INICIALIZAÇÃO E LOOP ==========
 def startup_checks():
-    total_risk = 0.0
+    total_margin_used = 0.0
+    total_position_usdt = 0.0
     usdt_balance = get_usdt_balance()
     usdt_available = get_available_margin()
 
@@ -461,15 +468,36 @@ def startup_checks():
     send_telegram(f"🚀 Bot ativo\n💰 Total: {usdt_balance:.2f}\n📉 Margem: {usdt_available:.2f}")
     send_discord(f"🚀 Bot ativo\n💰 Total: {usdt_balance:.2f}\n📉 Margem: {usdt_available:.2f}")
 
+    log("📋 Moedas em operação:")
+
     for symbol in SYMBOLS:
         config = CONFIGS[symbol]
-        risk = usdt_balance * config['risk_percent']
-        total_risk += risk
-        log(f"⚙️ {symbol}: Alavancagem {config['leverage']}x | Risco {config['risk_percent']*100:.1f}% = {risk:.2f} USDT")
+        leverage = config.get("leverage", LEVERAGE)
+        risk_percent = config.get("risk_percent", RISK_PERCENT)
+        margin_used = usdt_available * risk_percent
+        position_usdt = margin_used * leverage
 
-    log(f"📈 Total potencial por operação: {total_risk:.2f} USDT")
-    send_telegram(f"📈 Total potencial por operação: {total_risk:.2f} USDT")
-    send_discord(f"📈 Total potencial por operação: {total_risk:.2f} USDT")
+        total_margin_used += margin_used
+        total_position_usdt += position_usdt
+
+        msg = (
+            f"➡️ {symbol} | Direção: {config.get('direction', 'BOTH')} | Alav: {leverage}x | "
+            f"Margem usada: {margin_used:.2f} USDT | Posição estimada: {position_usdt:.2f} USDT"
+        )
+        log(msg)
+        send_telegram(msg)
+        send_discord(msg)
+
+    margin_msg = f"📊 Total margem usada: {total_margin_used:.2f} USDT"
+    position_msg = f"📈 Total estimado em posições alavancadas: {total_position_usdt:.2f} USDT"
+
+    log(margin_msg)
+    log(position_msg)
+    send_telegram(margin_msg)
+    send_telegram(position_msg)
+    send_discord(margin_msg)
+    send_discord(position_msg)
+
 
 def detect_open_positions():
     # Detecta posições abertas e atualiza estado inicial
@@ -492,13 +520,14 @@ def detect_open_positions():
                     })
                     log(f"🔄 Posição aberta detectada para {symbol}!")
                     log(f"📌 Tipo: {side} | Quantidade: {qty} | Entrada: {entry_price}")
-                    send_telegram(f"🔄 Posição {side} detectada na inicialização para {symbol}\nQtd: {qty}\nEntrada: {entry_price}")
-                    send_discord(f"🔄 Posição {side} detectada na inicialização para {symbol}\nQtd: {qty}\nEntrada: {entry_price}")
+                    # send_telegram(f"🔄 Posição {side} detectada na inicialização para {symbol}\nQtd: {qty}\nEntrada: {entry_price}")
+                    # send_discord(f"🔄 Posição {side} detectada na inicialização para {symbol}\nQtd: {qty}\nEntrada: {entry_price}")
                 break
     except Exception as e:
         log(f"Erro ao detectar posições abertas: {e}")
 
 if __name__ == "__main__":
+
     # Executa checagens iniciais
     startup_checks()
 
@@ -507,6 +536,7 @@ if __name__ == "__main__":
     schedule.every(5).minutes.do(task_update_stop_loss)
     schedule.every(60).seconds.do(task_monitor_positions)
     schedule.every(5).minutes.do(detect_open_positions)
+    schedule.every(1).minutes.do(cancel_orders_if_no_position)
 
     log("🟢 Iniciando loop principal...")
     while True:
