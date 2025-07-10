@@ -126,7 +126,7 @@ pip install -r requirements.txt
 
 ## ⏱️ Tarefas agendadas
 
-- Checagem de sinais: a cada 15 minutos
+- Checagem de sinais: a cada 3 minutos
 - Atualização do stop loss: a cada 5 minutos
 - Verificação de encerramento de posição: a cada 60 segundos
 - Detecção de posições abertas: a cada 3 minutos
