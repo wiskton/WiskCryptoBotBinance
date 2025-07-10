@@ -81,6 +81,7 @@ BINANCE_API_SECRET=sua_chave_secreta
 TELEGRAM_BOT_TOKEN=seu_token_bot_telegram
 TELEGRAM_CHAT_ID=seu_chat_id
 DISCORD_WEBHOOK_URL=sua_webhook_discord
+COIN_CONFIGS={"BTCUSDT":{"leverage":20,"risk_percent":0.05,"direction":"LONG"},"ETHUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH"},"PNUTUSDT":{"leverage":5,"risk_percent":0.05,"direction":"SHORT"}}
 ```
 
 ---

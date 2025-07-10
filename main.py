@@ -1,4 +1,5 @@
 import os
+import json
 import sys
 import time
 import schedule
@@ -15,15 +16,8 @@ from utils.util import log
 load_dotenv()
 
 # ========== CONFIG DE MOEDAS ==========
-CONFIGS = {
-    'BTCUSDT': {'leverage': 20, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'ETHUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'PENDLEUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'VIRTUALUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'PEPEUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'WIFUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'PNUTUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'SHORT'},
-}
+
+CONFIGS = json.loads(os.getenv("COIN_CONFIGS"))
 SYMBOLS = list(CONFIGS.keys())
 
 # ========== CONFIG ==========
