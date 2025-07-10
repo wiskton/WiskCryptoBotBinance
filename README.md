@@ -51,8 +51,8 @@ project/
 ### 1. Clone o repositório
 
 ```bash
-git clone https://github.com/seu-usuario/seu-bot-trade.git
-cd seu-bot-trade
+git clone https://github.com/wiskton/WiskCryptoBotBinance
+cd WiskCryptoBotBinance
 ```
 
 ### 2. Execute o script de setup
