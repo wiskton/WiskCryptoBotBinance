@@ -147,7 +147,7 @@ def check_rsi_trigger(symbol):
 def check_ma_crossover(symbol):
     # Cruzamento MA9 e MA21 no gráfico 3m
     try:
-        df = get_klines(symbol, interval='3m', limit=30)
+        df = get_klines(symbol, interval='3m', limit=100)
         if df.empty or len(df) < 22:
             return None
         df['ma9'] = df['close'].rolling(window=9).mean()
