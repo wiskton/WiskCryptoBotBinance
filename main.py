@@ -467,10 +467,10 @@ if __name__ == "__main__":
     startup_checks()
 
     # Agenda as tarefas
-    schedule.every(15).minutes.do(task_check_signals)
+    schedule.every(3).minutes.do(task_check_signals)
     schedule.every(5).minutes.do(task_update_stop_loss)
     schedule.every(60).seconds.do(task_monitor_positions)
-    schedule.every(3).minutes.do(detect_open_positions)
+    schedule.every(5).minutes.do(detect_open_positions)
 
     log("🟢 Iniciando loop principal...")
     while True:
