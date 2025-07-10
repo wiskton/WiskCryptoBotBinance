@@ -19,12 +19,17 @@ load_dotenv()
 
 CONFIGS = json.loads(os.getenv("COIN_CONFIGS"))
 SYMBOLS = list(CONFIGS.keys())
+rsi_trigger_flags = {symbol: {'LONG': False, 'SHORT': False} for symbol in SYMBOLS}
 
 # ========== CONFIG ==========
 API_KEY = os.getenv("BINANCE_API_KEY")
 API_SECRET = os.getenv("BINANCE_API_SECRET")
 
 STOP_LOOKBACK = 20      # candle lookback para stop
+# Valores padrão, caso não esteja no CONFIGS da moeda
+LEVERAGE = 10          # Alavancagem padrão
+RISK_PERCENT = 0.05    # 5% risco padrão
+DECIMALS = 3           # Número de casas decimais para quantidades (ajuste conforme símbolo)
 
 # ========== ESTADO GLOBAL ==========
 positions_state = {}
@@ -390,22 +395,50 @@ def task_check_signals():
     for symbol in SYMBOLS:
         if symbol not in positions_state:
             positions_state[symbol] = {'open': False, 'side': None, 'stop_loss': None, 'qty': 0.0}
+        if symbol not in rsi_trigger_flags:
+            rsi_trigger_flags[symbol] = {'LONG': False, 'SHORT': False}
+
         if positions_state[symbol]['open']:
             log(f"⚠️ Posição já aberta para {symbol}.")
             continue
-        rsi_long, rsi_short = check_rsi_trigger(symbol)
-        ma_signal = check_ma_crossover(symbol)
 
+        # Pega o RSI no gráfico 1h (ou seu timeframe desejado)
+        df = get_klines(symbol, interval='1h', limit=100)
+        if df.empty:
+            continue
+        df['rsi'] = ta.momentum.RSIIndicator(df['close'], window=14).rsi()
+        last_rsi = df['rsi'].iloc[-1]
+
+        # Atualiza flags RSI
+        # Para LONG, disparar quando RSI < 30
+        if last_rsi <= 30:
+            rsi_trigger_flags[symbol]['LONG'] = True
+            log(f"{symbol} RSI LONG trigger ativado (RSI={last_rsi:.2f})")
+        # Para SHORT, disparar quando RSI > 70
+    elif last_rsi >= 70:
+            rsi_trigger_flags[symbol]['SHORT'] = True
+            log(f"{symbol} RSI SHORT trigger ativado (RSI={last_rsi:.2f})")
+
+        ma_signal = check_ma_crossover(symbol)
         direction = CONFIGS.get(symbol, {}).get('direction', 'BOTH')
 
-        if ma_signal == 'LONG' and rsi_long and direction in ['LONG', 'BOTH']:
+        # Só abre LONG se flag RSI LONG estiver ativada e crossover LONG ocorrer
+        if ma_signal == 'LONG' and rsi_trigger_flags[symbol]['LONG'] and direction in ['LONG', 'BOTH']:
             log(f"🔔 Sinal COMPRA (LONG) detectado para {symbol}")
-            place_order(symbol, 'LONG', get_usdt_balance() * CONFIGS[symbol]['risk_percent'])
-        elif ma_signal == 'SHORT' and rsi_short and direction in ['SHORT', 'BOTH']:
+            success = place_order(symbol, 'LONG', get_usdt_balance() * CONFIGS[symbol]['risk_percent'])
+            if success:
+                rsi_trigger_flags[symbol]['LONG'] = False  # reseta a flag
+
+        # Só abre SHORT se flag RSI SHORT estiver ativada e crossover SHORT ocorrer
+        elif ma_signal == 'SHORT' and rsi_trigger_flags[symbol]['SHORT'] and direction in ['SHORT', 'BOTH']:
             log(f"🔻 Sinal VENDA (SHORT) detectado para {symbol}")
-            place_order(symbol, 'SHORT', get_usdt_balance() * CONFIGS[symbol]['risk_percent'])
+            success = place_order(symbol, 'SHORT', get_usdt_balance() * CONFIGS[symbol]['risk_percent'])
+            if success:
+                rsi_trigger_flags[symbol]['SHORT'] = False  # reseta a flag
+
         else:
-            log(f"ℹ️ Nenhum sinal válido para {symbol} ou direção não permitida.")
+            log(f"ℹ️ Nenhum sinal válido ou condição não satisfeita para {symbol}.")
+
 
 def task_update_stop_loss():
     for symbol in SYMBOLS:
