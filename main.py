@@ -16,10 +16,12 @@ load_dotenv()
 
 # ========== CONFIG DE MOEDAS ==========
 CONFIGS = {
-    'BTCUSDT': {'leverage': 20, 'risk_percent': 0.05, 'direction': 'LONG'},
-    'ETHUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'LONG'},
-    'PENDLEUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    'VIRTUALUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
+    'BTCUSDT': {'leverage': 20, 'risk_percent': 0.05, 'direction': 'BOTH'},
+    'ETHUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'BOTH'},
+    'PENDLEUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'BOTH'},
+    'VIRTUALUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'BOTH'},
+    'PEPEUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
+    'WIFUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
     'PNUTUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'SHORT'},
 }
 SYMBOLS = list(CONFIGS.keys())
@@ -129,9 +131,9 @@ def calculate_risk_quantity(symbol, entry_price, stop_loss_price, risk_usdt):
 
 # ========== LÓGICA DE SINAIS ==========
 def check_rsi_trigger(symbol):
-    # RSI no gráfico 15m, verificar se <=30 para LONG ou >=70 para SHORT
+    # RSI no gráfico 1h, verificar se <=30 para LONG ou >=70 para SHORT
     try:
-        df = get_klines(symbol, interval='15m', limit=100)
+        df = get_klines(symbol, interval='1h', limit=100)
         if df.empty:
             return False, False
         df['rsi'] = ta.momentum.RSIIndicator(df['close'], window=14).rsi()
@@ -234,7 +236,8 @@ def place_order(symbol, side, risk_usdt):
         return False
 
     # Ordem Take Profit
-    take_profit_price = round(entry_price * (1.015 if side == 'LONG' else 0.985), get_price_decimals(symbol))
+    take_profit_price = round(entry_price * (1.025 if side == 'LONG' else 0.975), get_price_decimals(symbol))
+
     try:
         order_tp = client.futures_create_order(
             symbol=symbol,
