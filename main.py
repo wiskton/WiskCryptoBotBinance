@@ -415,7 +415,7 @@ def task_check_signals():
             rsi_trigger_flags[symbol]['LONG'] = True
             log(f"{symbol} RSI LONG trigger ativado (RSI={last_rsi:.2f})")
         # Para SHORT, disparar quando RSI > 70
-    elif last_rsi >= 70:
+        elif last_rsi >= 70:
             rsi_trigger_flags[symbol]['SHORT'] = True
             log(f"{symbol} RSI SHORT trigger ativado (RSI={last_rsi:.2f})")
 
