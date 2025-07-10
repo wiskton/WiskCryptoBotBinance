@@ -81,7 +81,7 @@ BINANCE_API_SECRET=sua_chave_secreta
 TELEGRAM_BOT_TOKEN=seu_token_bot_telegram
 TELEGRAM_CHAT_ID=seu_chat_id
 DISCORD_WEBHOOK_URL=sua_webhook_discord
-COIN_CONFIGS={"BTCUSDT":{"leverage":20,"risk_percent":0.05,"direction":"LONG"},"ETHUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH"},"PNUTUSDT":{"leverage":5,"risk_percent":0.05,"direction":"SHORT"}}
+COIN_CONFIGS={"BTCUSDT":{"leverage":20,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.015},"ETHUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.015},"PENDLEUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.02},"VIRTUALUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.02},"1000PEPEUSDT":{"leverage":5,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.025},"WIFUSDT":{"leverage":5,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.025},"PNUTUSDT":{"leverage":5,"risk_percent":0.05,"direction":"SHORT","take_profit_percent":0.025}}
 ```
 
 ---
