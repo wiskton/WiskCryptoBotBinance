@@ -1,139 +1,118 @@
-# WiskCryptoBotBinance
+# 🐢 WiskCryptoBotBinance
 
-# 📈 Bot de Trade Automatizado - Binance Futuros
+Bot de trading automatizado para Binance Futures usando a estratégia **Turtle + RSI + Cruzamento de Médias Móveis**, com controle de risco e notificações via Telegram e Discord.
 
-Este bot realiza operações automáticas de **long/short** no mercado **Futures da Binance** com base em sinais técnicos (RSI + cruzamento de MAs), gerenciamento de risco por par e envio de alertas para **Telegram e Discord**.
+📍 Repositório: [github.com/wiskton/WiskCryptoBotBinance](https://github.com/wiskton/WiskCryptoBotBinance/)
 
 ---
 
 ## ⚙️ Funcionalidades
 
-- Estratégia com **RSI + MA crossover**
-- Controle de risco por ativo (alavancagem e % de risco configurável)
-- Suporte a múltiplos pares simultaneamente
-- Notificações automáticas para Telegram e Discord
-- Atualização dinâmica de Stop Loss
-- Detecta posições já abertas ao iniciar
-- Cancelamento automático de ordens pendentes
+- Estratégia combinada: **RSI + MA crossover + Turtle Stop**
+- Suporte a múltimos pares simultaneamente
+- Compatível com **Binance Futures**
+- Gerenciamento de risco individual por ativo
+- Configuração de:
+  - Alavancagem
+  - Percentual de risco
+  - Direção de operação (`LONG`, `SHORT` ou `BOTH`)
+  - Percentual de **take profit**
+- Atualização automática do stop loss
+- Detecção de posições abertas
+- Cancelamento de ordens pendentes
+- Notificações via **Telegram** e **Discord**
+- Modular e escalável
 
 ---
 
-## 📁 Estrutura de Pastas
+## 🧠 Estratégia
 
-```
-project/
-├── main.py
-├── setup_bot.sh
-├── requirements.txt
-├── .env
-├── utils/
-│   ├── telegram.py
-│   ├── discord.py
-│   └── util.py
-```
+1. **RSI (1h)**:
+   - LONG se RSI ≤ 30
+   - SHORT se RSI ≥ 70
+2. **Cruzamento de MAs (3m)**:
+   - MA9 cruza MA21 de baixo pra cima → LONG
+   - MA9 cruza MA21 de cima pra baixo → SHORT
+3. **Stop Loss dinâmico** com base no gráfico de 3m ou 5m
+4. **Take Profit** por ativo configurável (ex: 1.5%, 2%, 2.5%)
 
 ---
 
-## ✅ Pré-requisitos
+## 📝 Requisitos
 
-- Conta na Binance habilitada para **Futures**
 - Python 3.9+
-- Linux ou WSL recomendado
-- Pacotes do sistema:
-  ```bash
-  sudo apt install python3-venv python3-pip -y
-  ```
+- Conta na Binance Futures com API habilitada
+- Conta no Telegram e/ou Discord (para alertas)
 
 ---
 
-## 🚀 Passo a passo para rodar o bot
-
-### 1. Clone o repositório
+## 🚀 Instalação
 
 ```bash
-git clone https://github.com/wiskton/WiskCryptoBotBinance
+git clone https://github.com/wiskton/WiskCryptoBotBinance.git
 cd WiskCryptoBotBinance
-```
-
-### 2. Execute o script de setup
-
-```bash
-chmod +x setup_bot.sh
-./setup_bot.sh
-```
-
-O script irá:
-
-- Criar um ambiente virtual Python (`venv/`)
-- Instalar as dependências (`ta`, `python-binance`, `pandas`, etc.)
-- Criar o arquivo `.env` com as variáveis de API
-- Executar o bot automaticamente
-
----
-
-## 🔐 Configuração do `.env`
-
-Preencha com suas credenciais:
-
-```
-BINANCE_API_KEY=sua_chave_api
-BINANCE_API_SECRET=sua_chave_secreta
-TELEGRAM_BOT_TOKEN=seu_token_bot_telegram
-TELEGRAM_CHAT_ID=seu_chat_id
-DISCORD_WEBHOOK_URL=sua_webhook_discord
-COIN_CONFIGS={"BTCUSDT":{"leverage":20,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.015},"ETHUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.015},"PENDLEUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.02},"VIRTUALUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.02},"1000PEPEUSDT":{"leverage":5,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.025},"WIFUSDT":{"leverage":5,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.025},"PNUTUSDT":{"leverage":5,"risk_percent":0.05,"direction":"SHORT","take_profit_percent":0.025}}
-```
-
----
-
-## ⚙️ Configuração dos pares
-
-Dentro do `main.py`, edite o dicionário `CONFIGS` para definir os pares e seus parâmetros:
-
-```python
-CONFIGS = {
-    'BTCUSDT': {'leverage': 20, 'risk_percent': 0.05, 'direction': 'LONG'},
-    'ETHUSDT': {'leverage': 10, 'risk_percent': 0.05, 'direction': 'LONG'},
-    'SOLUSDT': {'leverage': 5, 'risk_percent': 0.05, 'direction': 'BOTH'},
-    ...
-}
-```
-
-- `leverage`: Alavancagem usada para o par
-- `risk_percent`: Percentual do saldo da conta usado por operação
-- `direction`: `'LONG'`, `'SHORT'` ou `'BOTH'` (permitido)
-
----
-
-## 📦 Dependências (caso precise instalar manualmente)
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
 pip install -r requirements.txt
 ```
 
 ---
 
-## 📊 Logs e alertas
+## 🔐 Configuração
 
-- Os logs são exibidos no terminal.
-- As notificações são enviadas para **Telegram** e **Discord** com:
-  - Posição aberta (tipo, preço, stop)
-  - Stop atualizado
-  - Posição encerrada com lucro/prejuízo
+Crie um arquivo `.env` na raiz com o seguinte conteúdo:
+
+```env
+BINANCE_API_KEY=your_api_key
+BINANCE_API_SECRET=your_api_secret
+
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+
+COIN_CONFIGS={"BTCUSDT":{"leverage":20,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.015},"ETHUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.015},"PENDLEUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.02},"VIRTUALUSDT":{"leverage":10,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.02},"1000PEPEUSDT":{"leverage":5,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.025},"WIFUSDT":{"leverage":5,"risk_percent":0.05,"direction":"BOTH","take_profit_percent":0.025},"PNUTUSDT":{"leverage":5,"risk_percent":0.05,"direction":"SHORT","take_profit_percent":0.025}}
+```
+
+> 🧠 Use sempre aspas duplas e a configuração toda em uma única linha no `.env`
 
 ---
 
-## ⏱️ Tarefas agendadas
+## ▶️ Executando o bot
 
-- Checagem de sinais: a cada 3 minutos
-- Atualização do stop loss: a cada 5 minutos
-- Verificação de encerramento de posição: a cada 60 segundos
-- Detecção de posições abertas: a cada 3 minutos
+```bash
+python main.py
+```
+
+> O bot executa ciclos automaticamente a cada 3 minutos para sinais, 5 minutos para atualizar stop e 60 segundos para monitoramento.
 
 ---
 
-## 🛑 Encerrar o bot
+## 📦 Estrutura do projeto
 
-Pressione `Ctrl + C` para parar a execução.
+```
+WiskCryptoBotBinance/
+├── main.py               # Arquivo principal do bot
+├── .env                  # Suas credenciais e configurações
+├── requirements.txt      # Dependências
+└── utils/
+    ├── telegram.py       # Notificações no Telegram
+    ├── discord.py        # Notificações no Discord
+    └── util.py           # Funções auxiliares (logs, etc.)
+```
+
+---
+
+## 🛡️ Aviso Legal
+
+> ⚠️ **Este projeto é apenas para fins educacionais.** Trading de criptomoedas envolve risco. Use por sua conta e risco.
+
+---
+
+## 🙌 Contribuições
+
+Sinta-se à vontade para abrir issues ou PRs com sugestões e melhorias.
+
+---
+
+## 📫 Contato
+
+[https://github.com/wiskton](https://github.com/wiskton)
